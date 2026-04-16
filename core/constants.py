@@ -1,0 +1,2 @@
+ENV_PREFIX="PRODUCT_"
+SERVICE_NAME="products"
