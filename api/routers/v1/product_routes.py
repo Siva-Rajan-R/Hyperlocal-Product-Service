@@ -2,7 +2,7 @@ from fastapi import APIRouter,HTTPException,Query,Depends
 from infras.primary_db.services.product_service import ProductService,CreateProductSchema,UpdateProductSchema,Optional
 from typing import Annotated
 from infras.primary_db.main import get_pg_async_session,AsyncSession
-from common_repos.enums.timezone_enum import TimeZoneEnum
+from hyperlocal_platform.core.enums.timezone_enum import TimeZoneEnum
 from core.utils.validate_fields import validate_fields
 from ...handlers.product_handler import HandleProductRequest
 print(TimeZoneEnum)

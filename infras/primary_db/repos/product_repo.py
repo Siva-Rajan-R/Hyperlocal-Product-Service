@@ -4,8 +4,8 @@ from ..main import AsyncSession
 from sqlalchemy import select,update,delete,or_,and_,func
 from schemas.v1.db_schema.product_schema import CreateProductDbSchema,UpdateProductDbSchema
 from typing import Optional
-from common_repos.decorators.db_session_handler_dec import start_db_transaction
-from common_repos.enums.timezone_enum import TimeZoneEnum
+from hyperlocal_platform.core.decorators.db_session_handler_dec import start_db_transaction
+from hyperlocal_platform.core.enums.timezone_enum import TimeZoneEnum
 from core.decorators.error_handler_dec import catch_errors
 from typing import Optional,List
 

@@ -2,7 +2,7 @@ from fastapi import HTTPException
 from icecream import ic
 import inspect,asyncio
 from functools import wraps
-from common_repos.models.req_res_models import BaseResponseTypDict,ErrorResponseTypDict,SuccessResponseTypDict
+from hyperlocal_platform.core.models.req_res_models import BaseResponseTypDict,ErrorResponseTypDict,SuccessResponseTypDict
 
 
 def catch_errors(func):
