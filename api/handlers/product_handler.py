@@ -18,7 +18,7 @@ class HandleProductRequest(BaseServiceModel):
 
 
     async def create(self,data:CreateProductSchema):
-        await validate_fields(service_name="PRODUCT",shop_id="",incoming_fields=data.datas)
+        # await validate_fields(service_name="PRODUCT",shop_id="",incoming_fields=data.datas)
 
         res=await ProductService(session=self.session).create(data=data)
         if not res:
@@ -42,7 +42,7 @@ class HandleProductRequest(BaseServiceModel):
 
 
     async def update(self,data:UpdateProductSchema):
-        await validate_fields(service_name="PRODUCT",shop_id="",incoming_fields=data.datas)
+        # await validate_fields(service_name="PRODUCT",shop_id="",incoming_fields=data.datas)
         res=await ProductService(session=self.session).update(data=data)
         if not res:
             raise HTTPException(

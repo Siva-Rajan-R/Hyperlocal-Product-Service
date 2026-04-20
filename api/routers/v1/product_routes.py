@@ -16,11 +16,11 @@ PG_ASYNC_SESSION=Annotated[AsyncSession,Depends(get_pg_async_session)]
 
 
 # Write methods
-@router.post('/')
+@router.post('')
 async def create(data:CreateProductSchema,session:PG_ASYNC_SESSION):
     return await HandleProductRequest(session=session).create(data=data)
 
-@router.put('/')
+@router.put('')
 async def update(data:UpdateProductSchema,session:PG_ASYNC_SESSION):
     return await HandleProductRequest(session=session).update(data=data)
 
@@ -38,7 +38,7 @@ async def search(session:PG_ASYNC_SESSION,q:str=Query(...),limit:Optional[int]=Q
 async def get(session:PG_ASYNC_SESSION,product_barcode_id:str,timezone:Optional[TimeZoneEnum]=Query(TimeZoneEnum.Asia_Kolkata)):
     return await HandleProductRequest(session=session).getby_id(product_barcode_id=product_barcode_id,timezone=timezone)
 
-@router.get('/')
+@router.get('')
 async def get(session:PG_ASYNC_SESSION,timezone:Optional[TimeZoneEnum]=Query(TimeZoneEnum.Asia_Kolkata),q:Optional[str]=Query(''),limit:Optional[int]=Query(10),offset:int=Query(1)):
     return await HandleProductRequest(session=session).get(
         query=q,
