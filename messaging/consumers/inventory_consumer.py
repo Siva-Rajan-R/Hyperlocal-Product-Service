@@ -39,9 +39,9 @@ class InventoryConsumer(BaseConsumerModel):
             product_data=await ProductService(session=session).getby_id(timezone=TimeZoneEnum.Asia_Kolkata,product_barcode_id=barcode)
             is_new=False
             if not product_data:
-                name=inventory_data.get('product_name')
-                description=inventory_data.get('product_description')
-                category=inventory_data.get('product_category')
+                name=inventory_data.get('name')
+                description=inventory_data.get('description')
+                category=inventory_data.get('category')
 
                 if not name or not description or not category:
                     raise BussinessError(
@@ -54,10 +54,7 @@ class InventoryConsumer(BaseConsumerModel):
                     )
                 
                 data=CreateProductSchema(
-                    name=name,
-                    description=description,
-                    category=category,
-                    barcode=barcode
+                    datas=inventory_data
                 )
                 product_data=await ProductService(session=session).create(data=data)
                 if not product_data:
@@ -72,7 +69,7 @@ class InventoryConsumer(BaseConsumerModel):
                 
                 is_new=True
             
-            product_data=product_data.model_dump(mode='json')
+            product_data={**product_data['datas'],"id":product_data['id'],"barcode":product_data['barcode']}
             product_data['is_new']=is_new
             ic(product_data,type(product_data))
             return SuccessMessagingTypDict(
@@ -114,8 +111,9 @@ class InventoryConsumer(BaseConsumerModel):
             )
         
         async with AsyncProductLocalSession() as session:
-            
+            ic(barcode)
             product_data=await ProductService(session=session).getby_id(timezone=TimeZoneEnum.Asia_Kolkata,product_barcode_id=barcode)
+            ic(product_data)
             if not product_data:
                 raise BussinessError(
                     type=ErrorTypeSEnum.BUSSINESS_ERROR,
@@ -125,7 +123,8 @@ class InventoryConsumer(BaseConsumerModel):
                         user_msg='Invalid barcode'
                     )
                 )
-            product_data=product_data.model_dump(mode='json') 
+            ic(product_data)
+            product_data={**product_data['datas'],"id":product_data['id'],"barcode":product_data['barcode']} 
             ic(product_data,type(product_data),self.headers)
             return SuccessMessagingTypDict(
                 response=product_data,

@@ -1,4 +1,4 @@
-from schemas.v1.request_schema.product_schema import CreateProductSchema,UpdateProductSchema
+from schemas.v1.request_schema.product_schema import CreateProductSchema,UpdateProductSchema,PRODUCT_CREATE_MANDATORY_FIELDS,PRODUCT_UPDATE_MANDATORY_FIELDS
 from models.service_models.base_service_model import BaseServiceModel
 from hyperlocal_platform.core.models.req_res_models import BaseResponseTypDict,ErrorResponseTypDict,SuccessResponseTypDict
 from fastapi.exceptions import HTTPException
@@ -9,7 +9,7 @@ from fastapi.responses import ORJSONResponse
 from schemas.v1.response_schemas.product_schema import ResponseProdcutSchema
 from infras.primary_db.services.product_service import ProductService
 from sqlalchemy.ext.asyncio import AsyncSession
-from core.utils.validate_fields import validate_fields
+from core.utils.validate_fields import validate_fields,validate_internal_fields
 from typing import Optional,List
 
 class HandleProductRequest(BaseServiceModel):
@@ -19,6 +19,7 @@ class HandleProductRequest(BaseServiceModel):
 
     async def create(self,data:CreateProductSchema):
         # await validate_fields(service_name="PRODUCT",shop_id="",incoming_fields=data.datas)
+        await validate_internal_fields(fields_tocheck=PRODUCT_CREATE_MANDATORY_FIELDS,incoming_fields=data.datas)
 
         res=await ProductService(session=self.session).create(data=data)
         if not res:
@@ -43,6 +44,7 @@ class HandleProductRequest(BaseServiceModel):
 
     async def update(self,data:UpdateProductSchema):
         # await validate_fields(service_name="PRODUCT",shop_id="",incoming_fields=data.datas)
+        await validate_internal_fields(fields_tocheck=PRODUCT_UPDATE_MANDATORY_FIELDS,incoming_fields=data.datas)
         res=await ProductService(session=self.session).update(data=data)
         if not res:
             raise HTTPException(

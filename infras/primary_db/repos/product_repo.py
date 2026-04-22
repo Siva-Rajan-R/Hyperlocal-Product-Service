@@ -8,6 +8,7 @@ from hyperlocal_platform.core.decorators.db_session_handler_dec import start_db_
 from hyperlocal_platform.core.enums.timezone_enum import TimeZoneEnum
 from core.decorators.error_handler_dec import catch_errors
 from typing import Optional,List
+from icecream import ic
 
 
 
@@ -125,6 +126,7 @@ class ProductRepo(BaseRepoModel):
     
 
     async def getby_id(self,timezone:TimeZoneEnum,product_barcode_id:str):
+        ic(product_barcode_id)
         created_at=func.date(func.timezone(timezone.value,Products.created_at))
         product_stmt=(
             select(

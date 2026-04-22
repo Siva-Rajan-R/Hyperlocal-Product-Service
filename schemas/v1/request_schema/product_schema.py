@@ -2,14 +2,21 @@ from pydantic import BaseModel
 from core.data_formats.enums.product_enums import ProductCategoryEnum
 from typing import Optional
 
+
+PRODUCT_CREATE_MANDATORY_FIELDS={
+    "barcode":str
+}
+
 class CreateProductSchema(BaseModel):
-    barcode:str
     datas:dict
 
 
+PRODUCT_UPDATE_MANDATORY_FIELDS={
+    "id":str,
+    "barcode":str
+}
+
 class UpdateProductSchema(BaseModel):
-    id:str
-    barcode:str
     datas:dict
 
 # name:Optional[str]=None

@@ -1,3 +1,4 @@
+from icecream import ic
 from ..main import AsyncSession
 from ..repos.product_repo import ProductRepo,Optional,CreateProductDbSchema,UpdateProductDbSchema
 from schemas.v1.request_schema.product_schema import CreateProductSchema,UpdateProductSchema
@@ -19,20 +20,21 @@ class ProductService(BaseServiceModel):
         self.product_repo_obj=ProductRepo(session=session)
 
     async def create(self,data:CreateProductSchema):
-        if await self.product_repo_obj.is_product_exists(product_barcode_id=data.barcode):
+        if await self.product_repo_obj.is_product_exists(product_barcode_id=data.datas.get("barcode")):
             return False
         
         product_id:str=generate_uuid()
         data=CreateProductDbSchema(
-            **data.model_dump(mode='json'),
-            id=product_id
+            datas=data.datas,
+            id=product_id,
+            barcode=data.datas.get("barcode")   
         )
 
         res=await self.product_repo_obj.create(data=data)
         if not res:
             return False
         
-        return data
+        return data.model_dump(mode='json')
     
 
     async def create_bulk(self,datas:List[CreateProductSchema]):
@@ -45,7 +47,11 @@ class ProductService(BaseServiceModel):
         return await self.product_repo_obj.create_bulk(datas=datas_toadd)
 
     async def update(self,data:UpdateProductSchema):
-        data=UpdateProductDbSchema(**data.model_dump(mode='json',exclude_none=True,exclude_unset=True))
+        data=UpdateProductDbSchema(
+            datas=data.datas,
+            id=data.datas.get("id"),
+            barcode=data.datas.get("barcode")
+        )
         res=await self.product_repo_obj.update(data=data)
         if not res:
             return False
@@ -73,6 +79,7 @@ class ProductService(BaseServiceModel):
 
 
     async def getby_id(self,timezone:TimeZoneEnum,product_barcode_id:str):
+        ic(product_barcode_id)
         res=await self.product_repo_obj.getby_id(timezone=timezone,product_barcode_id=product_barcode_id)
         return res
     
