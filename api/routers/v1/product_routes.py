@@ -1,5 +1,6 @@
 from fastapi import APIRouter,HTTPException,Query,Depends
 from infras.primary_db.services.product_service import ProductService,CreateProductSchema,UpdateProductSchema,Optional
+from schemas.v1.request_schemas.product_schema import CreateProductSchema,UpdateProductSchema,DeleteProductSchema,GetAllProductSchema,GetProductByIdSchema
 from typing import Annotated
 from infras.primary_db.main import get_pg_async_session,AsyncSession
 from hyperlocal_platform.core.enums.timezone_enum import TimeZoneEnum
@@ -25,26 +26,18 @@ async def update(data:UpdateProductSchema,session:PG_ASYNC_SESSION):
     return await HandleProductRequest(session=session).update(data=data)
 
 @router.delete('/{product_id}')
-async def delete(product_id:str,session:PG_ASYNC_SESSION):
-    return await HandleProductRequest(session=session).delete(product_id=product_id)
+async def delete(session:PG_ASYNC_SESSION,data:DeleteProductSchema=Depends()):
+    return await HandleProductRequest(session=session).delete(data=data)
 
 
 # Read methods
-@router.get('/search')
-async def search(session:PG_ASYNC_SESSION,q:str=Query(...),limit:Optional[int]=Query(5)):
-    return await HandleProductRequest(session=session).search(query=q,limit=limit)
 
-@router.get('/by/{product_barcode_id}')
-async def get(session:PG_ASYNC_SESSION,product_barcode_id:str,timezone:Optional[TimeZoneEnum]=Query(TimeZoneEnum.Asia_Kolkata)):
-    return await HandleProductRequest(session=session).getby_id(product_barcode_id=product_barcode_id,timezone=timezone)
+@router.get('/by')
+async def get(session:PG_ASYNC_SESSION,data:GetProductByIdSchema=Depends()):
+    return await HandleProductRequest(session=session).getby_id(data=data)
 
 @router.get('')
-async def get(session:PG_ASYNC_SESSION,timezone:Optional[TimeZoneEnum]=Query(TimeZoneEnum.Asia_Kolkata),q:Optional[str]=Query(''),limit:Optional[int]=Query(10),offset:int=Query(1)):
-    return await HandleProductRequest(session=session).get(
-        query=q,
-        limit=limit,
-        offset=offset,
-        timezone=timezone
-    )
+async def get(session:PG_ASYNC_SESSION,data:GetAllProductSchema=Depends()):
+    return await HandleProductRequest(session=session).get(data=data)
 
 

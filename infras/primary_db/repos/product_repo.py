@@ -1,9 +1,11 @@
 from models.repo_models.base_repo_model import BaseRepoModel
 from ..models.product_model import Products,String
+from sqlalchemy.dialects.postgresql import insert
 from ..main import AsyncSession
 from sqlalchemy import select,update,delete,or_,and_,func
-from schemas.v1.db_schema.product_schema import CreateProductDbSchema,UpdateProductDbSchema
-from typing import Optional
+from schemas.v1.db_schemas.product_schema import CreateProductDbSchema,UpdateProductDbSchema
+from schemas.v1.request_schemas.product_schema import DeleteProductSchema,GetAllProductSchema,GetProductByIdSchema,VerifyProductSchema
+from typing import Optional,List
 from hyperlocal_platform.core.decorators.db_session_handler_dec import start_db_transaction
 from hyperlocal_platform.core.enums.timezone_enum import TimeZoneEnum
 from core.decorators.error_handler_dec import catch_errors
@@ -17,7 +19,14 @@ class ProductRepo(BaseRepoModel):
         super().__init__(session)
         self.product_cols=(
             Products.id,
+            Products.ui_id,
+            Products.sequence_id,
             Products.barcode,
+            Products.name,
+            Products.description,
+            Products.category,
+            Products.created_at,
+            Products.updated_at,
             Products.datas
         )
 
@@ -36,10 +45,17 @@ class ProductRepo(BaseRepoModel):
 
 
     @start_db_transaction
-    async def create(self,data:CreateProductDbSchema)->bool:
-        self.session.add(Products(**data.model_dump(mode="json")))
-        await self.session.commit()
-        return True
+    async def create(self,data:CreateProductDbSchema)-> dict | None:
+        stmt=(
+            insert(
+                Products
+            )
+            .values(**data.model_dump(mode="json"))
+            .on_conflict_do_nothing(index_elements=['barcode'])
+            .returning(*self.product_cols)
+        )
+        res=(await self.session.execute(stmt)).mappings().one_or_none()
+        return res
     
     @start_db_transaction
     async def create_bulk(self,datas:List[Products]):
@@ -48,26 +64,25 @@ class ProductRepo(BaseRepoModel):
     
 
     @start_db_transaction
-    async def update(self,data:UpdateProductDbSchema)->str|None:
+    async def update(self,data:UpdateProductDbSchema)->dict|None:
         product_toupdate=update(
             Products
         ).where(
             and_(
-                Products.id==data.id,
-                Products.barcode==data.barcode
+                Products.id==data.id
             )
-        ).values(**data.model_dump(mode="json",exclude_none=True,exclude_unset=True)).returning(Products.id)
+        ).values(**data.model_dump(mode="json",exclude_none=True,exclude_unset=True)).returning(*self.product_cols)
 
-        is_updated=(await self.session.execute(product_toupdate)).scalar_one_or_none()
+        is_updated=(await self.session.execute(product_toupdate)).mappings().one_or_none()
         return is_updated
     
     @start_db_transaction
-    async def delete(self, product_id:str)->str|None:
+    async def delete(self, data:DeleteProductSchema)->dict|None:
         product_todel=delete(
             Products
-        ).where(Products.id==product_id).returning(Products.id)
+        ).where(Products.id==data.id).returning(*self.product_cols)
 
-        is_deleted=(await self.session.execute(product_todel)).scalar_one_or_none()
+        is_deleted=(await self.session.execute(product_todel)).mappings().one_or_none()
 
         return is_deleted
     
@@ -88,9 +103,10 @@ class ProductRepo(BaseRepoModel):
         return is_deleted
     
 
-    async def get(self,timezone:TimeZoneEnum,query:str,limit:int,offset:int):
-        search_term=f"%{query}%"
-        created_at=func.date(func.timezone(timezone.value,Products.created_at))
+    async def get(self,data:GetAllProductSchema) -> List[dict] | list:
+        search_term=f"%{data.query}%"
+        created_at=func.date(func.timezone(data.timezone.value,Products.created_at))
+        cursor=(data.offset-1)*data.limit
         product_stmt=(
             select(
                 *self.product_cols,
@@ -102,7 +118,7 @@ class ProductRepo(BaseRepoModel):
                     Products.barcode.ilike(search_term),
                     func.cast(created_at,String).ilike(search_term)
                 )
-            ).offset(offset=offset).limit(limit=limit)
+            ).offset(offset=cursor).limit(limit=data.limit)
             .order_by(created_at)
         )
 
@@ -121,13 +137,11 @@ class ProductRepo(BaseRepoModel):
         )
 
         result = (await self.session.execute(check_stmt)).scalars().all()
-
         return result
     
 
-    async def getby_id(self,timezone:TimeZoneEnum,product_barcode_id:str):
-        ic(product_barcode_id)
-        created_at=func.date(func.timezone(timezone.value,Products.created_at))
+    async def getby_id(self,data:GetProductByIdSchema) -> dict | None:
+        created_at=func.date(func.timezone(data.timezone.value,Products.created_at))
         product_stmt=(
             select(
                 *self.product_cols,
@@ -135,15 +149,37 @@ class ProductRepo(BaseRepoModel):
             )
             .where(
                 or_(
-                    Products.id==product_barcode_id,
-                    Products.barcode==product_barcode_id
+                    Products.id==data.id,
+                    Products.barcode==data.barcode
                 )
             )
         )
 
         product=(await self.session.execute(product_stmt)).mappings().one_or_none()
-
         return product
+    
+
+    async def verify(self,data:VerifyProductSchema):
+        stmt=(
+            select(
+                Products.id
+            )
+            .where(
+                or_(
+                    Products.id==data.id,
+                    Products.barcode==data.barcode
+                )
+            )
+        )
+
+        result=(await self.session.execute(stmt)).scalar_one_or_none()
+
+        if result:
+            return {'id':result,'exists':True}
+        
+        return {'id':'','exists':False}
+
+
     
     async def search(self, query:str, limit:int):
         search_term=f"%{query}%"
@@ -161,4 +197,4 @@ class ProductRepo(BaseRepoModel):
 
         products=(await self.session.execute(product_stmt)).mappings().all()
 
-        return products
+        return productsele

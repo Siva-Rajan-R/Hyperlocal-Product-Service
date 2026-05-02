@@ -1,5 +1,5 @@
 from .main import RabbitMQMessagingConfig,ExchangeType
-from .controllers.controller import ConsumersHandler
+from .controllers.service_controller import service_main_controller
 import asyncio
 
 async def worker():
@@ -8,10 +8,7 @@ async def worker():
 
     # Exchanges
     exchanges=[
-        {'name':'shops.inventory.products.exchange','exc_type':ExchangeType.TOPIC},
-        {'name':'inventory.inventory.products.exchange','exc_type':ExchangeType.TOPIC},
-        {'name':'purchase.purchase.products.exchange','exc_type':ExchangeType.TOPIC},
-        {'name':'suppliers.purchase.products.exchange','exc_type':ExchangeType.TOPIC},
+        {'name':'products.service.exchange','exc_type':ExchangeType.DIRECT}
     ]
 
     for exchange in exchanges:
@@ -19,10 +16,7 @@ async def worker():
 
     # Queues
     queues=[
-        {'exc_name':'shops.inventory.products.exchange','q_name':'shops.inventory.products.queue','r_key':'shops.inventory.*.*.v1'},
-        {'exc_name':'inventory.inventory.products.exchange','q_name':'inventory.inventory.products.queue','r_key':'inventory.inventory.*.*.v1'},
-        {'exc_name':'purchase.purchase.products.exchange','q_name':'purchase.purchase.products.queue','r_key':'purchase.purchase.*.*.v1'},
-        {'exc_name':'suppliers.purchase.products.exchange','q_name':'suppliers.purchase.products.queue','r_key':'suppliers.purchase.*.*.v1'},
+        {'exc_name':'products.service.exchange','q_name':'products.service.queue','r_key':'products.service.routing.key'}
     ]
 
     for queue in queues:
@@ -34,22 +28,11 @@ async def worker():
 
     # Consumers
     consumers=[
-        {'q_name':'shops.inventory.products.queue','handler':ConsumersHandler.main_handler},
-        {'q_name':'inventory.inventory.products.queue','handler':ConsumersHandler.main_handler},
-        {'q_name':'purchase.purchase.products.queue','handler':ConsumersHandler.main_handler},
-        {'q_name':'suppliers.purchase.products.queue','handler':ConsumersHandler.main_handler},
+        {'q_name':'products.service.queue','handler':service_main_controller}
     ]
 
     for consumer in consumers:
+
         await rabbitmq_msg_obj.consume_event(queue_name=consumer['q_name'],handler=consumer['handler'])
 
     await asyncio.Event().wait()
-
-if __name__=="__main__":
-    asyncio.run(worker())
-
-    
-
-
-
-    
